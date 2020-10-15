@@ -1,7 +1,7 @@
 \documentclass[obeyspaces,spaces,hyphens]{beamer}
 \usepackage[utf8]{inputenc}
 \usepackage{minted}
-
+\usepackage[english,russian]{babel}
 \mode<presentation>
 \usetheme{Bootlin}
 
@@ -23,124 +23,107 @@
 
 \begin{frame}{Thomas Petazzoni}
   \begin{itemize}
-  \item CTO and Embedded Linux engineer at Bootlin
+  \item Технический директор и инженер по встроенному Linux в Bootlin
     \begin{itemize}
-    \item Embedded Linux {\bf development}: kernel and driver
-      development, system integration, boot time and power
-      consumption optimization, consulting, etc.
-    \item Embedded Linux {\bf training}, Linux driver development training
-      and Android system development training, with materials freely
-      available under a Creative Commons license.
+    \item {\bf Разработка} встроенного ядра Linux и разработка драйверов, системная интеграция, оптимизация времени загрузки и энергопотребления, консультации и т. Д.
+    \item {\bf Обучение} по встроенному Linux {\ bf}, обучение по разработке драйверов для Linux и обучение по разработке системы Android, материалы доступны под свободной лицензии Creative Commons.
     \item \url{http://bootlin.com}
     \end{itemize}
-  \item Contributions
+  \item Сотрудничество
     \begin{itemize}
-    \item {\bf Kernel support for the Marvell Armada} ARM SoCs from
-      Marvell
-    \item Major contributor to {\bf Buildroot}, an open-source, simple and
-      fast embedded Linux build system
+    \item {\bf Поддержка ядра для Marvell Armada} ARM SoC от Marvell
+    \item Основной участник {\ bf Buildroot}, простой и быстрой встроенной системы сборки Linux с открытым исходным кодом.
     \end{itemize}
-  \item Living in {\bf Toulouse}, south west of France
+  \item Живет в {\ bf Тулузе}, на юго-западе Франции.
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Agenda}
   \begin{itemize}
-  \item Quick reminder about ARM platforms
-  \item User perspective: booting with the Device Tree
-  \item Basic Device Tree syntax and compilation
-  \item Simple example of Device Tree fragment
-  \item Overall organization of a Device Tree
-  \item Examples of Device Tree usage
-  \item General considerations about the Device Tree in Linux
+  \item Напоминание о платформах ARM
+   \item Пользовательская перспектива: загрузка с помощью дерева устройств
+   \item Базовый синтаксис и компиляция дерева устройств
+   \item Простой пример фрагмента дерева устройств
+   \item Общая организация дерева устройств
+   \item Примеры использования дерева устройств
+   \item Общие сведения о дереве устройств в Linux
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Reminder about ARM platforms}
+\begin{frame}{Напоминание о платформах ARM}
   \begin{itemize}
-  \item {\bf ARM} (the company) designs CPU cores: instruction set, MMU, caches, etc.
+  \item {\bf ARM} (компания) разрабатывает ядра ЦП: набор команд, MMU, кеши и т. д.
     \begin{itemize}
-    \item They don't sell any hardware
+    \item Они не продают оборудование
     \end{itemize}
-  \item {\bf Silicon vendors} buy the CPU core design from ARM, and
-    around it add a number of {\em peripherals}, either designed
-    internally or bought from third parties
+  \item {\bf Поставщики кремния} покупают дизайн ядра ЦП у ARM, и  вокруг него добавьте несколько {\em периферийных устройств}, либо разработанных  внутри компании или купленные у третьих лиц
     \begin{itemize}
     \item Texas Instruments, Atmel, Marvell, Freescale, Qualcomm,
       Nvidia, etc.
-    \item They sell {\em System-on-chip} or {\em SoCs}
+    \item Они продают {\em Систеиы на кристалле} или {\em SoC}
     \end{itemize}
-  \item {\bf System makers} design an actual board, with one or
-    several processors, and a number of on-board peripherals
+  \item {\bf Производители систем} проектируют настоящую плату с одним или несколькими процессорами и несколькими встроенными периферийными устройствами.
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Schematic view of an ARM platform}
+\begin{frame}{Схематическое изображение платформы ARM}
   \begin{center}
     \includegraphics[width=\textwidth]{arm-architecture.pdf}
   \end{center}
 \end{frame}
 
-\begin{frame}{Discoverable vs. non-discoverable hardware}
+\begin{frame}{Обнаруживаемое и не обнаруживаемое оборудование}
   \begin{itemize}
-  \item Certain busses have dynamic discoverability features
+  \item Некоторые автобусы имеют функции динамического обнаружения.
     \begin{itemize}
     \item USB, PCI
-    \item Allow to enumerate devices on the bus, query their
-      characteristics, at runtime.
-    \item No need to know in advance what's on the bus
+    \item Позволяет перечислять устройства на шине, запрашивать их характеристики во время выполнения.
+    \item Не нужно заранее знать, что в шине
     \end{itemize}
-  \item But many busses do not have such features
+  \item Но многие шины не имеют таких возможностей.
     \begin{itemize}
-    \item Memory-mapped devices inside SoC, I2C, SPI, SDIO, etc.
-    \item The system has to know in advance ``where'' the different
-      devices are located, and their characteristics
+    \item Устройства с отображением памяти внутри SoC, I2C, SPI, SDIO, etc.
+    \item Система должна заранее знать, где находятся различные устройства, и их характеристики.
     \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{User perspective: before the Device Tree}
+\begin{frame}{Перспектива пользователя: до дерева устройств}
   \begin{itemize}
-  \item The kernel contains the entire description of the hardware.
-  \item The bootloader loads a single binary, the kernel image, and
-    executes it.
+  \item Ядро содержит полное описание оборудования.
+  \item Загрузчик загружает единственный двоичный файл, образ ядра, и выполняет его.
     \begin{itemize}
     \item \code{uImage} or \code{zImage}
     \end{itemize}
-  \item The bootloader prepares some additional information, called
-    \code{ATAGS}, which address is passed to the kernel through
-    register \code{r2}
+  \item Загрузчик подготавливает дополнительную информацию, которая называется
+     \code {ATAGS}, адрес которого передается ядру через
+     зарегистрироваться \code {r2}
     \begin{itemize}
-    \item Contains information such as memory size and location,
-      kernel command line, etc.
+    \item Содержит такую информацию, как размер и расположение памяти, командная строка ядра и т. Д.
     \end{itemize}
-  \item The bootloader tells the kernel on which board it is being
-    booted through a {\em machine type} integer, passed in register
+  \item Загрузчик сообщает ядру, на какой плате оно загружается, с помощью целого числа {\em machine type}, переданного в регистре
     \code{r1}.
   \item U-Boot command: \code{bootm <kernel img addr>}
-  \item Barebox variable: \code{bootm.image}
+  \item Переменная Barebox: \code{bootm.image}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{User perspective: before the Device Tree}
+\begin{frame}{Перспектива пользователя: до дерева устройств}
   \begin{center}
     \includegraphics[height=0.6\textheight]{booting-without-dt.pdf}
   \end{center}
 \end{frame}
 
-\begin{frame}{User perspective: booting with a Device Tree}
+\begin{frame}{Перспектива пользователя: загрузка с помощью дерева устройств}
   \begin{itemize}
-  \item The kernel no longer contains the description of the hardware,
-    it is located in a separate binary: the {\em device tree blob}
+  \item Ядро больше не содержит описания оборудования, оно находится в отдельном двоичном файле: {\em blob дерева устройств}
   \item The bootloader loads two binaries: the kernel image and the
     {\em DTB}
     \begin{itemize}
-    \item Kernel image remains \code{uImage} or \code{zImage}
-    \item DTB located in \code{arch/arm/boot/dts}, one per board
+    \item Образ ядра находится \code{uImage} или в \code{zImage}
+    \item DTB находится в \code{arch/arm/boot/dts}, по одному на плату.
     \end{itemize}
-  \item The bootloader passes the DTB address through \code{r2}. It is
-    supposed to adjust the DTB with memory information, kernel command
-    line, and potentially other info.
+  \item Загрузчик передает адрес DTB через \code {r2}. Предполагается настроить DTB с помощью информации о памяти, командной строки ядра и, возможно, другой информации.
   \item No more {\em machine type}.
   \item U-Boot command: \code{boot[mz] <kernel img addr> - <dtb addr>}
   \item Barebox variables: \code{bootm.image}, \code{bootm.oftree}
