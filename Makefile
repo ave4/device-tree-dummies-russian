@@ -2,6 +2,7 @@
 PICTURES = \
 	common/logo-penguins.pdf \
 	common/logo-square.pdf \
+	common/bootlin-logo.pdf \
 	booting-without-dt.pdf \
 	booting-with-dt.pdf \
 	dt-basic-syntax.pdf \
@@ -15,7 +16,7 @@ all: $(PICTURES)
 	$(PDFLATEX_ENV) pdflatex -shell-escape petazzoni-device-tree-dummies.tex
 
 %.pdf: %.svg
-	inkscape -D -A $@ $<
+	inkscape -D -o $@ $<
 
 %.pdf: %.eps
 	epstopdf --outfile=$@ $^
