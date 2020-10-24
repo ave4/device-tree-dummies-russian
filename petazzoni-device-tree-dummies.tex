@@ -126,28 +126,24 @@
   \item Загрузчик передает адрес DTB через \code {r2}. Предполагается настроить DTB с помощью информации о памяти, командной строки ядра и, возможно, другой информации.
   \item No more {\em machine type}.
   \item U-Boot command: \code{boot[mz] <kernel img addr> - <dtb addr>}
-  \item Barebox variables: \code{bootm.image}, \code{bootm.oftree}
+  \item Переменные Barebox: \code{bootm.image}, \code{bootm.oftree}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{User perspective: booting with a Device Tree}
+\begin{frame}{Перспектива пользователя: загрузка с помощью дерева устройств}
   \begin{center}
     \includegraphics[height=0.6\textheight]{booting-with-dt.pdf}
   \end{center}
 \end{frame}
 
-\begin{frame}[fragile]{User perspective: compatibility mode for DT booting}
+\begin{frame}[fragile]{С точки зрения пользователя: режим совместимости для загрузки DT
+}
   \begin{itemize}
-  \item Some bootloaders have no specific support for the Device Tree,
-    or the version used on a particular device is too old to have this
-    support.
-  \item To ease the transition, a {\em compatibility} mechanism was
-    added: \code{CONFIG_ARM_APPENDED_DTB}.
+  \item Некоторые загрузчики не имеют специальной поддержки для дерева устройств, или версия, используемая на конкретном устройстве, слишком старая для такой поддержки.
+  \item Для облегчения перехода был добавлен {\em механизм совместимости}: \code{CONFIG_ARM_APPENDED_DTB}.
     \begin{itemize}
-    \item It tells the kernel to look for a DTB right {\em after} the
-      kernel image.
-    \item There is no built-in Makefile rule to produce such kernel,
-      so one must manually do:
+    \item Он говорит ядру искать DTB сразу {\em после образа ядра}.
+    \item Встроенного правила Makefile для создания такого ядра нет, поэтому нужно вручную сделать:
       \begin{block}{}
         \begin{minted}[fontsize=\scriptsize]{bash}
 cat arch/arm/boot/zImage arch/arm/boot/dts/myboard.dtb > my-zImage
@@ -155,56 +151,42 @@ mkimage ... -d my-zImage my-uImage
 \end{minted}
 \end{block}
 \end{itemize}
-  \item In addition, the additional option
-    \code{CONFIG_ARM_ATAG_DTB_COMPAT} tells the kernel to read the
-    {\em ATAGS} information from the bootloader, and update the DT
-    using them.
+  \item Кроме того, дополнительная опция
+    \code{CONFIG_ARM_ATAG_DTB_COMPAT} сообщает ядру, что необходимо прочитать информацию {\em ATAGS} из загрузчика и обновить DT, используя их.
   \end{itemize}
 \end{frame}
 
-\begin{frame}{What is the Device Tree ?}
+\begin{frame}{Что такое дерево устройств?}
   \begin{itemize}
-  \item Quoted from the {\em Power.org Standard for Embedded Power
+  \item Цитата из {\em Power.org Standard for Embedded Power
       Architecture Platform Requirements (ePAPR)}
     \begin{itemize}
-    \item The ePAPR specifies a concept called a device tree to
-      describe system hardware. A boot program loads a device tree
-      into a client program’s memory and passes a pointer to the
-      device tree to the client.
-    \item A device tree is a tree data structure with nodes that
-      describe the physical devices in a system.
-    \item An ePAPR-compliant device tree describes device
-      information in a system that cannot be dynamically detected by a
-      client program.
+    \item EPAPR определяет концепцию, называемую деревом устройств, для описания оборудования системы. Программа загрузки загружает дерево устройств в память клиентской программы и передает клиенту указатель на дерево устройств.
+    \item Дерево устройств - это древовидная структура данных с узлами, которые описывают физические устройства в системе.
+    \item Дерево устройств, совместимое с ePAPR, описывает информацию об устройстве в системе, которая не может быть динамически обнаружена клиентской программой.
     \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Basic Device Tree syntax}
+\begin{frame}{Базовый синтаксис дерева устройств}
   \begin{center}
     \includegraphics[height=0.8\textheight]{dt-basic-syntax.pdf}
   \end{center}
 \end{frame}
 
-\begin{frame}[fragile]{From source to binary}
+\begin{frame}[fragile]{От исходного кода к двоичному}
   \begin{itemize}
-  \item On ARM, all {\bf Device Tree Source} files (DTS) are for now
-    located in \code{arch/arm/boot/dts}
+  \item В ARM все файлы {\bf Device Tree Source} (DTS) пока находятся в \code{arch/arm/boot/dts}
     \begin{itemize}
-    \item \code{.dts} files for board-level definitions
-    \item \code{.dtsi} files for included files, generally containing
-      SoC-level definitions
+    \item \code{.dts} файлы для определений на уровне платы (конкретной модели телефона)
+    \item \code{.dtsi} файлы для включаемых файлов, обычно содержащие определения уровня SoC
     \end{itemize}
-  \item A tool, the {\bf Device Tree Compiler} compiles the source
-    into a binary form.
+  \item Инструмент {\bf Device Tree Compiler} компилирует исходный код в двоичную форму.
     \begin{itemize}
-    \item Source code located in \code{scripts/dtc}
+    \item Исходный код находится в \code{scripts/dtc}
     \end{itemize}
-  \item The {\bf Device Tree Blob} is produced by the compiler, and is
-    the binary that gets loaded by the bootloader and parsed by the
-    kernel at boot time.
-  \item \code{arch/arm/boot/dts/Makefile} lists which DTBs
-    should be generated at build time.
+  \item {\bf Device Tree Blob} создается компилятором и представляет собой двоичный файл, который загружается загрузчиком и анализируется ядром во время загрузки.
+  \item \code{arch/arm/boot/dts/Makefile} перечисляет, какие DTB должны быть созданы во время сборки.
     \begin{block}{}
       \tiny
 \begin{verbatim}
@@ -216,10 +198,9 @@ dtb-$(CONFIG_ARCH_MVEBU) += armada-370-db.dtb \
   \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Exploring the DT on the target}
+\begin{frame}[fragile]{Изучение ДУ на устройстве}
   \begin{itemize}
-  \item In \code{/sys/firmware/devicetree/base}, there is a
-    directory/file representation of the Device Tree contents
+  \item В \code{/sys/firmware/devicetree/base}, есть каталог/файл, представляющий содержимое дерева устройств.
 {\footnotesize
     \begin{block}{}
 \begin{verbatim}
@@ -236,20 +217,19 @@ drwxr-xr-x   10 root     root     0 Jan  1 00:00 soc
 \end{verbatim}
     \end{block}
 }
-  \item If \code{dtc} is available on the target, possible to "unpack"
-    the Device Tree using:\\
+  \item Если \code{dtc} доступен на устройстве, то можно "распаковать" дерево устройств, используя:\\
     \code{dtc -I fs /sys/firmware/devicetree/base}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{A simple example, DT side}
+\begin{frame}{Простой пример, сторона DT}
   \begin{center}
     \includegraphics[width=\textwidth]{dt-simple-example.pdf}
   \end{center}
 \end{frame}
 
-\begin{frame}[fragile]{A simple example, driver side (1)}
-  \begin{block}{The compatible string used to bind a device with the driver}
+\begin{frame}[fragile]{Простой пример, со стороны драйвера (1)}
+  \begin{block}{Совместимая строка, используемая для привязки устройства к драйверу.}
     \begin{minted}[fontsize=\tiny]{c}
 static struct of_device_id mxs_auart_dt_ids[] = {
         {
